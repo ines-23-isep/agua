@@ -1,0 +1,175 @@
+<!doctype html>
+<html lang="pt">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Água do Dia</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=Inter:wght@400;500;600&display=swap">
+<style>
+/* Layout: one narrow column, a big bottle gauge on top, controls below. */
+:root{
+  --bg:#eef4f7; --surface:#ffffff; --fg:#13303d; --muted:#5c7683;
+  --water:#2b8fc4; --water-soft:#cfe6f2; --line:#d5e2e8; --done:#2f9a6a;
+  --display:"Bricolage Grotesque", "Inter", system-ui, sans-serif;
+  --body:"Inter", system-ui, -apple-system, "Segoe UI", sans-serif;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#0d1a20; --surface:#14262e; --fg:#e4f0f5; --muted:#8fa8b3;
+  --water:#4fb0e3; --water-soft:#1c3a48; --line:#24404c; --done:#4cc28d; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0d1a20; --surface:#14262e; --fg:#e4f0f5; --muted:#8fa8b3;
+  --water:#4fb0e3; --water-soft:#1c3a48; --line:#24404c; --done:#4cc28d; color-scheme:dark}
+html,body{background:var(--bg)}
+body{margin:0}
+body{color:var(--fg);font-family:var(--body);font-size:15px;line-height:1.45;
+  padding-left:max(16px, env(safe-area-inset-left, 0px));
+  padding-right:max(16px, env(safe-area-inset-right, 0px));padding-block:20px 32px}
+.wrap{max-width:440px;margin:0 auto;display:flex;flex-direction:column;gap:20px}
+header{display:flex;justify-content:space-between;align-items:baseline;gap:12px}
+h1{font-family:var(--display);font-weight:800;font-size:28px;margin:0;letter-spacing:-.01em}
+.date{color:var(--muted);font-size:13px;text-transform:capitalize}
+.label{font-size:12px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);margin:0 0 8px}
+
+.gauge{display:flex;gap:20px;align-items:center}
+.bottle{flex:none;width:96px;height:200px;position:relative}
+.bottle svg{width:100%;height:100%;display:block}
+.stats{display:flex;flex-direction:column;gap:6px;min-width:0}
+.big{font-family:var(--display);font-weight:800;font-size:44px;line-height:1;font-variant-numeric:tabular-nums}
+.big small{font-size:18px;font-weight:600;color:var(--muted)}
+.goal{color:var(--muted);font-variant-numeric:tabular-nums}
+.left{font-weight:600}
+.left.ok{color:var(--done)}
+
+.seg{display:grid;gap:8px}
+.seg button,.add button,.row button{font:inherit;cursor:pointer;border-radius:12px;border:1.5px solid var(--line);background:var(--surface);color:var(--fg)}
+.seg button{padding:12px 14px;text-align:left;display:flex;justify-content:space-between;gap:8px}
+.seg button span:last-child{color:var(--muted);font-variant-numeric:tabular-nums}
+.seg button[aria-pressed="true"]{border-color:var(--water);background:var(--water-soft)}
+.seg button[aria-pressed="true"] span:last-child{color:var(--fg);font-weight:600}
+
+.toggle{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px 14px;background:var(--surface);border:1.5px solid var(--line);border-radius:12px}
+.toggle input{width:22px;height:22px;accent-color:var(--water)}
+
+.add{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.add button{padding:14px 6px;display:flex;flex-direction:column;align-items:center;gap:2px;background:var(--water);border-color:var(--water);color:#fff}
+.add button b{font-family:var(--display);font-size:20px}
+.add button span{font-size:12px;opacity:.9}
+.row{display:flex;gap:8px}
+.row button{flex:1;padding:10px;color:var(--muted)}
+button:focus-visible,input:focus-visible{outline:3px solid var(--water);outline-offset:2px}
+
+.log{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:4px;font-variant-numeric:tabular-nums}
+.log li{display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--line);color:var(--muted)}
+.log li b{color:var(--fg);font-weight:600}
+.note{font-size:13px;color:var(--muted)}
+@media (prefers-reduced-motion: no-preference){#fill{transition:y .5s ease,height .5s ease}}
+</style>
+</head>
+<body>
+
+<div class="wrap">
+  <header>
+    <h1>Água do Dia</h1>
+    <span class="date" id="date"></span>
+  </header>
+
+  <section class="gauge" aria-live="polite">
+    <div class="bottle" aria-hidden="true">
+      <svg viewBox="0 0 96 200">
+        <defs><clipPath id="clip"><path d="M34 4h28v18c0 6 22 14 22 34v128a12 12 0 0 1-12 12H24a12 12 0 0 1-12-12V56c0-20 22-28 22-34z"/></clipPath></defs>
+        <rect x="0" y="0" width="96" height="200" fill="var(--water-soft)" clip-path="url(#clip)"/>
+        <rect id="fill" x="0" y="200" width="96" height="0" fill="var(--water)" clip-path="url(#clip)"/>
+        <path d="M34 4h28v18c0 6 22 14 22 34v128a12 12 0 0 1-12 12H24a12 12 0 0 1-12-12V56c0-20 22-28 22-34z" fill="none" stroke="var(--line)" stroke-width="2"/>
+      </svg>
+    </div>
+    <div class="stats">
+      <div class="big"><span id="drank">0</span> <small>ml</small></div>
+      <div class="goal">de <span id="goal">1750</span> ml · <span id="bottles">0</span> garrafas</div>
+      <div class="left" id="left"></div>
+    </div>
+  </section>
+
+  <section>
+    <p class="label">Que dia é hoje?</p>
+    <div class="seg" id="types">
+      <button type="button" id="t-rest" data-type="rest"><span>Descanso</span><span data-goal="rest"></span></button>
+      <button type="button" id="t-one" data-type="one"><span>Só corrida ou só ginásio</span><span data-goal="one"></span></button>
+      <button type="button" id="t-two" data-type="two"><span>Corrida + ginásio</span><span data-goal="two"></span></button>
+    </div>
+  </section>
+
+  <label class="toggle" for="creatina">
+    <span>Estou a tomar creatina <span class="note">(+500 ml)</span></span>
+    <input type="checkbox" id="creatina">
+  </label>
+
+  <section>
+    <p class="label">Bebi</p>
+    <div class="add">
+      <button type="button" id="a250" data-ml="250"><b>+250</b><span>1 copo</span></button>
+      <button type="button" id="a500" data-ml="500"><b>+500</b><span>1 garrafa</span></button>
+      <button type="button" id="a750" data-ml="750"><b>+750</b><span>garrafa treino</span></button>
+    </div>
+  </section>
+
+  <div class="row">
+    <button type="button" id="undo">Desfazer último</button>
+    <button type="button" id="reset">Recomeçar hoje</button>
+  </div>
+  <p class="note" id="confirm" hidden>Carrega outra vez em “Recomeçar hoje” para apagar o registo de hoje.</p>
+
+  <section>
+    <p class="label">Registo de hoje</p>
+    <ul class="log" id="log"></ul>
+  </section>
+
+  <p class="note">O registo fica guardado neste telemóvel e recomeça sozinho todos os dias. A creatina e o tipo do último dia ficam lembrados.</p>
+</div>
+
+<script>
+const GOALS={rest:1750,one:2250,two:2750};
+const KEY="agua-do-dia-v1";
+const today=()=>{const d=new Date();return d.getFullYear()+"-"+(d.getMonth()+1)+"-"+d.getDate()};
+let s={day:today(),type:"rest",creatina:false,log:[]};
+try{const raw=localStorage.getItem(KEY);if(raw){const p=JSON.parse(raw);s={...s,...p}}}catch(e){}
+function checkDay(){if(s.day!==today()){s.day=today();s.log=[];save()}}
+function save(){try{localStorage.setItem(KEY,JSON.stringify(s))}catch(e){}}
+const $=id=>document.getElementById(id);
+const fmt=n=>n.toLocaleString("pt-PT");
+let armed=false;
+
+function render(){
+  checkDay();
+  const extra=s.creatina?500:0;
+  const goal=GOALS[s.type]+extra;
+  const drank=s.log.reduce((a,b)=>a+b.ml,0);
+  $("date").textContent=new Date().toLocaleDateString("pt-PT",{weekday:"long",day:"numeric",month:"short"});
+  $("drank").textContent=fmt(drank);
+  $("goal").textContent=fmt(goal);
+  $("bottles").textContent=(drank/500).toLocaleString("pt-PT",{maximumFractionDigits:1});
+  const left=goal-drank;
+  $("left").textContent=left>0?`Faltam ${fmt(left)} ml (≈ ${(left/500).toLocaleString("pt-PT",{maximumFractionDigits:1})} garrafas)`:"Objetivo cumprido!";
+  $("left").classList.toggle("ok",left<=0);
+  const pct=Math.min(drank/goal,1);
+  const top=22,bottom=196,h=(bottom-top)*pct;
+  $("fill").setAttribute("y",bottom-h);$("fill").setAttribute("height",h);
+  document.querySelectorAll("#types button").forEach(b=>b.setAttribute("aria-pressed",b.dataset.type===s.type));
+  document.querySelectorAll("[data-goal]").forEach(e=>e.textContent=fmt(GOALS[e.dataset.goal]+extra)+" ml");
+  $("creatina").checked=s.creatina;
+  $("log").innerHTML=s.log.length?s.log.slice().reverse().map(x=>`<li><span>${x.t}</span><b>+${x.ml} ml</b></li>`).join(""):'<li><span>Ainda nada. Começa com um copo!</span></li>';
+}
+document.querySelectorAll("#types button").forEach(b=>b.addEventListener("click",()=>{s.type=b.dataset.type;save();render()}));
+$("creatina").addEventListener("change",e=>{s.creatina=e.target.checked;save();render()});
+document.querySelectorAll(".add button").forEach(b=>b.addEventListener("click",()=>{
+  checkDay();const d=new Date();
+  s.log.push({ml:+b.dataset.ml,t:d.toLocaleTimeString("pt-PT",{hour:"2-digit",minute:"2-digit"})});save();render()}));
+$("undo").addEventListener("click",()=>{s.log.pop();save();render()});
+$("reset").addEventListener("click",()=>{
+  if(!armed){armed=true;$("confirm").hidden=false;setTimeout(()=>{armed=false;$("confirm").hidden=true},4000);return}
+  armed=false;$("confirm").hidden=true;s.log=[];save();render()});
+document.addEventListener("visibilitychange",()=>{if(!document.hidden)render()});
+render();
+</script>
+</body>
+</html>
